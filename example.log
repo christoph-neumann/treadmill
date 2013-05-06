@@ -1,0 +1,46 @@
+Stops: 00 06 12 18 24 30 36 42 48 54
+(To remind myself)
+
+Thu Apr 04 2013  16:42-18:30
+ * Initial plan for world conquest
+ * Ran into a few obstacles.
+
+Fri Apr 05 2013  15:54-18:18
+Got everything for the world domination server working. This could be easier than I anticipated.
+
+Sat Apr 06 2013  10:00-10:48
+ * Quick status check.
+Sat Apr 06 2013  14:12-14:30
+ * Another quick status check.
+
+Mon Apr 08 2013  17:24-17:42
+ * Fixed an issue with the server. The time wasn't in GMT--the official timezone of world
+   domination.
+Mon Apr 08 2013  17:42-18:12  meeting
+ * Broke the bad news to the client.
+
+Tue Apr 16 2013  09:00-13:54
+ * Setup a new SAN to collect all the data.
+ * Secured all sensitive telnet traffic using ROT-13 encryption.
+
+Wed Apr 24 2013  17:54-18:42  n/b
+ * Comping a bug fix.
+ * Turns out I input the secret code incorrectly and the world domination server was actually
+   participating in SETI instead doing real work.
+
+Mon Apr 29 2013  16:06-17:06  meeting
+ * Follow-up meeting with the client.
+ * It seems the server has been working great.
+
+Tue Apr 30 2013  09:30-11:12  dev
+Tue Apr 30 2013  23:12-01:18  dev
+Started programming for the super secret app for world domination. Oh...this is going to be a good
+one! Just wait 'til folks download this thing!
+
+
+To Do:
+ - Research hypnosis via app
+ - Figure out if someone has cracked the ROT-13 encryption--it seems some information has leaked.
+
+
+vim:set expandtab tw=100:
