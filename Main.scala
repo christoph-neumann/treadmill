@@ -59,7 +59,8 @@ The fields are:
 		// syntax errors. Since Source is lazy, use toList to force the iteration to complete.
 		val in = Source.fromFile(new File(filename))
 		val lines = (in.getLines flatMap {
-			case EntryLine(date, from, to, cat, extra) =>
+			case EntryLine(date, from, to, cat_or_null, extra) =>
+				val cat = Option(cat_or_null).getOrElse("uncategorized")
 				// Create date + time objects. If the end time is before the start time, it means we crossed
 				// midnight and the date is the next day. If the regex didn't match a category, it will be
 				// "null", so we can use Option to set the default to "".
@@ -74,7 +75,7 @@ The fields are:
 							from_dt,
 							to_dt,
 							new Duration(from_dt, to_dt).getStandardMinutes() / 60.0,
-							Option(cat).getOrElse("")
+							cat
 						)
 					)
 				}
@@ -105,8 +106,7 @@ The fields are:
 		val categories = entries.map(_.category).distinct.sorted
 		categories foreach { cat =>
 			println("")
-			val title = if (cat != "") cat else "uncategorized"
-			println("-[ "+ title + " ]-")
+			println("-[ "+ cat + " ]-")
 			print_calendar(entries filter {_.category == cat})
 		}
 
