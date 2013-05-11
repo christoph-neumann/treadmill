@@ -7,21 +7,34 @@ import org.joda.time.{DateTime, DateTimeConstants, Duration, LocalDate}
 
 object Main {
 	def main(argv: Array[String]) {
-		val (opts, args) = (argv.foldLeft(Set[String](), List[String]()) { case ((opts, args), arg) =>
-			arg match {
-				case "-h" => (opts + "-h", args)
-				case "-d" => (opts + "-d", args)
-				case "-i" => (opts + "-i", args)
-				case _ => (opts, args :+ arg)
-			}
-		})
 
-		if ( args.size == 0 || opts.contains("-h") || args(0) == "help" ) {
+		def parseopt(argv: Seq[String], opts: Set[Opt], args: List[String]): (Set[Opt], List[String]) = {
+			if (argv.size == 0) {
+				(opts, args)
+			} else {
+				argv match {
+					case "-h" :: tail => parseopt(tail, opts + Help(), args)
+					case "-d" :: tail => parseopt(tail, opts + Detailed(), args)
+					case "-i" :: list :: tail => parseopt(tail, opts + Include(list.split(",").toSet), args)
+					case "-x" :: list :: tail => parseopt(tail, opts + Exclude(list.split(",").toSet), args)
+					case arg :: tail => parseopt(tail, opts, args :+ arg)
+				}
+			}
+		}
+
+		val (opts, args) = parseopt(argv.toList, Set[Opt](), List[String]())
+
+		// There maybe be more than one Include or Exclude set. We'll combine them into one master set
+		// for each.
+		val include = (opts collect { case Include(set) => set.toList }).flatten
+		val exclude = (opts collect { case Exclude(set) => set.toList }).flatten
+
+		if ( args.size == 0 || opts.contains(Help()) || args(0) == "help" ) {
 			help()
 			System.exit(1)
 		}
 
-		args foreach { filename => report(opts.contains("-d"), opts.contains("-i"), filename) }
+		args foreach { filename => report(opts.contains(Detailed()), include, exclude, filename) }
 	}
 
 
@@ -35,7 +48,15 @@ This program is used to keep track of hours worked.
 OPTIONS are one of:
  -h  display this help text
  -d  include the detailed report
- -i  ignore non-billable hours. (The "n/b" category.)
+
+ -i category,other,...
+     include only the given categories in the report
+
+ -x category,other,...
+     exclude the given categories from the report
+
+The -i and -x options may be used more than once. The total list is the
+combination of all uses.
 
 It extracts the time information from the following format:
 
@@ -54,7 +75,7 @@ The fields are:
 	val EntryLine = """^(\w{3} \w{3} \d{2} \d{4})  (\d\d:\d\d)-(\d\d:\d\d)(?:  ([a-zA-Z_/-]+))?(.*)$""".r
 	val SuspiciousLine = """.*(Sun|Mon|Tue|Wed|Thu|Fri|Sat|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) .*""".r
 
-	def report(detailed: Boolean, ignore_non_billable: Boolean, filename: String) {
+	def report(detailed: Boolean, include: Set[String], exclude: Set[String], filename: String) {
 		// Parse out all the time entry lines from the file while checking for lines that might have
 		// syntax errors. Since Source is lazy, use toList to force the iteration to complete.
 		val in = Source.fromFile(new File(filename))
@@ -64,7 +85,7 @@ The fields are:
 				// Create date + time objects. If the end time is before the start time, it means we crossed
 				// midnight and the date is the next day. If the regex didn't match a category, it will be
 				// "null", so we can use Option to set the default to "".
-				if ( ignore_non_billable && cat == "n/b" ) {
+				if ( exclude.contains(cat) || (include.size > 0 && ! include.contains(cat)) ) {
 					Seq()
 				} else {
 					val from_dt = format.parse_dt(date +" "+ from)
@@ -170,6 +191,12 @@ The fields are:
 		println("%42s Total: %6.2f".format("", total))
 	}
 }
+
+sealed abstract trait Opt
+case class Help() extends Opt
+case class Detailed() extends Opt
+case class Exclude(categories: Set[String]) extends Opt
+case class Include(categories: Set[String]) extends Opt
 
 case class Entry(
 	from: DateTime,
