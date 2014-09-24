@@ -72,7 +72,7 @@ The fields are:
 	}
 
 	
-	val EntryLine = """^(\w{3} \w{3} \d{2} \d{4})  (\d\d:\d\d)-(\d\d:\d\d)(?:  ([a-zA-Z_/-]+))?(.*)$""".r
+	val EntryLine = """^(\w{3} \w{3} \d{2} \d{4})  (\d\d:\d\d)-(\d\d:\d\d)(?:  ([a-zA-Z_/0-9:-]+))?(.*)$""".r
 	val SuspiciousLine = """.*(Sun|Mon|Tue|Wed|Thu|Fri|Sat|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) .*""".r
 
 	def report(detailed: Boolean, include: Set[String], exclude: Set[String], filename: String) {
@@ -129,6 +129,19 @@ The fields are:
 			println("")
 			println("-[ "+ cat + " ]-")
 			print_calendar(entries filter {_.category == cat})
+		}
+
+		var in_group =
+			entries
+			.filter(_.category.contains(":"))
+			.groupBy(_.category.takeWhile(_ != ':'))
+
+		if ( in_group.size > 0 ) {
+			println("Group Totals")
+			in_group.keys.toList.sorted foreach { group =>
+				println(group +": "+ in_group(group).map{_.hours}.foldLeft(0.0){_+_})
+			}
+			println()
 		}
 
 		val grand_total = entries.map{_.hours}.foldLeft(0.0){_+_}
