@@ -75,6 +75,9 @@ The fields are:
 	val EntryLine = """^(\w{3} \w{3} \d{2} \d{4})  (\d\d:\d\d)-(\d\d:\d\d)(?:  ([a-zA-Z_/0-9:-]+))?(.*)$""".r
 	val SuspiciousLine = """.*(Sun|Mon|Tue|Wed|Thu|Fri|Sat|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) .*""".r
 
+	def group_name(str: String) = str.takeWhile(_ != ':')
+	def total(entries: Seq[Entry]) = entries.map{_.hours}.foldLeft(0.0){_+_}
+
 	def report(detailed: Boolean, include: Set[String], exclude: Set[String], filename: String) {
 		// Parse out all the time entry lines from the file while checking for lines that might have
 		// syntax errors. Since Source is lazy, use toList to force the iteration to complete.
@@ -123,28 +126,36 @@ The fields are:
 			}
 		}
 
-		// Print out calendars for each category mentioned in the data.
+		// List of categories that were used
 		val categories = entries.map(_.category).distinct.sorted
+
+		// Summarize the group information
+		val group_total =
+			entries
+			.filter(_.category.contains(":"))
+			.groupBy(e => group_name(e.category))
+			.map { case (group, entries) =>
+				(group, total(entries))
+			}
+		val group_cats = categories.groupBy(group_name)
+
+		// Print out calendars for each category mentioned in the data.
 		categories foreach { cat =>
+			// Print the calendar for this category
 			println("")
 			println("-[ "+ cat + " ]-")
 			print_calendar(entries filter {_.category == cat})
-		}
 
-		var in_group =
-			entries
-			.filter(_.category.contains(":"))
-			.groupBy(_.category.takeWhile(_ != ':'))
-
-		if ( in_group.size > 0 ) {
-			println("Group Totals")
-			in_group.keys.toList.sorted foreach { group =>
-				println(group +": "+ in_group(group).map{_.hours}.foldLeft(0.0){_+_})
+			// If this category is part of a group, and this is the last category in
+			// that group, print out the group total.
+			var group = group_name(cat)
+			val cats = group_cats(group)
+			if ( cats.size > 1 && cat == cats.last ) {
+				println("\n%36s Group Total: %6.2f".format("", group_total(group)))
 			}
-			println()
 		}
 
-		val grand_total = entries.map{_.hours}.foldLeft(0.0){_+_}
+		val grand_total = total(entries)
 		println("Grand Total: %.2f".format(grand_total))
 
 		// Alert the user about any lines that look like they may have been time entries, but didn't
@@ -190,7 +201,7 @@ The fields are:
 			by_day.get(on) match {
 				case None => print("%6s".format("- "))
 				case Some(entries) =>
-					val day_total = entries.map{_.hours}.foldLeft(0.0){_+_}
+					val day_total = this.total(entries)
 					week_total += day_total
 					total += day_total
 					print("%6.2f".format(day_total))
