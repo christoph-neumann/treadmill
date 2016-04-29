@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version="0.12.3"
+version="0.13.11"
 
 # Ensure the cache directory for the SBT launcher exists.
 sbt_cache="$HOME/.sbt/launch"
@@ -10,7 +10,7 @@ test ! -d "$sbt_cache" && mkdir -p "$sbt_cache"
 launch_jar="$sbt_cache/sbt-launch-$version.jar"
 if [ ! -f $launch_jar ]; then
 	echo "Fetching the SBT launcher. Saving as $launch_jar"
-	curl -o "$launch_jar" http://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/$version/sbt-launch.jar
+	curl -s -L -f -o "$launch_jar" http://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/$version/sbt-launch.jar
 fi
 
 # Start SBT

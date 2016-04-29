@@ -2,7 +2,7 @@ import com.typesafe.sbt.SbtStartScript
 
 name := "treadmill"
 
-scalaVersion := "2.10.1"
+scalaVersion := "2.11.8"
 
 seq(SbtStartScript.startScriptForClassesSettings: _*)
 
