@@ -56,7 +56,7 @@ To create a docker image:
 
 To run the docker image:
 
-    docker run -v $(pwd):/data -w /data treadmill -d example.log
+    docker run --rm -v $(pwd):/data -w /data treadmill -d example.log
 
 
 # Build Details
