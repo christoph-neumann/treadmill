@@ -48,6 +48,17 @@ Run without any arguments to get the help text:
 You can put a ":" in a category to get sub-categories.
 
 
+# Docker image
+
+To create a docker image:
+
+    docker build -t treadmill .
+
+To run the docker image:
+
+    docker run -v $(pwd):/data -w /data treadmill -d example.log
+
+
 # Build Details
 
 The script works by creating a single jar and running it. You can do this yourself with:
