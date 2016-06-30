@@ -15,6 +15,7 @@ object Main {
 				argv match {
 					case "-h" :: tail => parseopt(tail, opts + Help(), args)
 					case "-d" :: tail => parseopt(tail, opts + Detailed(), args)
+					case "-f" :: tail => parseopt(tail, opts + Flatten(), args)
 					case "-i" :: list :: tail => parseopt(tail, opts + Include(list.split(",").toSet), args)
 					case "-x" :: list :: tail => parseopt(tail, opts + Exclude(list.split(",").toSet), args)
 					case arg :: tail => parseopt(tail, opts, args :+ arg)
@@ -34,7 +35,7 @@ object Main {
 			System.exit(1)
 		}
 
-		args foreach { filename => report(opts.contains(Detailed()), include, exclude, filename) }
+		args foreach { filename => report(opts.contains(Detailed()), opts.contains(Flatten()), include, exclude, filename) }
 	}
 
 
@@ -48,6 +49,7 @@ This program is used to keep track of hours worked.
 OPTIONS are one of:
  -h  display this help text
  -d  include the detailed report
+ -f  flatten all categories and show a single calendar
 
  -i category,other,...
      include only the given categories in the report
@@ -78,13 +80,13 @@ The fields are:
 	def group_name(str: String) = str.takeWhile(_ != ':')
 	def total(entries: Seq[Entry]) = entries.map{_.hours}.foldLeft(0.0){_+_}
 
-	def report(detailed: Boolean, include: Set[String], exclude: Set[String], filename: String) {
+	def report(detailed: Boolean, flatten: Boolean, include: Set[String], exclude: Set[String], filename: String) {
 		// Parse out all the time entry lines from the file while checking for lines that might have
 		// syntax errors. Since Source is lazy, use toList to force the iteration to complete.
 		val in = Source.fromFile(new File(filename))
 		val lines = (in.getLines flatMap {
 			case EntryLine(date, from, to, cat_or_null, extra) =>
-				val cat = Option(cat_or_null).getOrElse("uncategorized")
+				val cat = if (flatten) "uncategorized" else Option(cat_or_null).getOrElse("uncategorized")
 				// Create date + time objects. If the end time is before the start time, it means we crossed
 				// midnight and the date is the next day. If the regex didn't match a category, it will be
 				// "null", so we can use Option to set the default to "".
@@ -219,6 +221,7 @@ The fields are:
 sealed abstract trait Opt
 case class Help() extends Opt
 case class Detailed() extends Opt
+case class Flatten() extends Opt
 case class Exclude(categories: Set[String]) extends Opt
 case class Include(categories: Set[String]) extends Opt
 
